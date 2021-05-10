@@ -11,7 +11,8 @@ async function logQuery(queryText) {
   let data = await client.query(queryText);
   client.end();
 
-  console.log(data.rows);
+  console.log(data.rows[1].duration);
 }
 
-logQuery("SELECT * FROM directors");
+let currentQuery = "SELECT duration FROM films JOIN directors ON films.director_id = directors.id WHERE name = 'Francis Ford Coppola' ORDER BY duration DESC;"
+logQuery(currentQuery);
