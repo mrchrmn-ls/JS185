@@ -17,8 +17,16 @@ class ExpenseData {
     });
   }
 
+  static SCHEMA = `CREATE TABLE expenses (
+id serial PRIMARY KEY,
+amount numeric (6,2) NOT NULL CHECK (amount > 0.00),
+memo text NOT NULL,
+created_on date NOT NULL DEFAULT now()
+);`;
+
   async list() {
     await this.client.connect().catch(error => logAndExit(error));
+    await this.setUpSchema().catch(error => logAndExit(error));
   
     let query = "SELECT * FROM expenses;"
     let data = await this.client.query(query).catch(error => logAndExit(error));
@@ -33,6 +41,7 @@ class ExpenseData {
 
   async add(amount, memo) {
     await this.client.connect().catch(error => logAndExit(error));
+    await this.setUpSchema().catch(error => logAndExit(error));
   
     let queryText = "INSERT INTO expenses (amount, memo) VALUES ($1, $2);";
     let queryValues = [amount, memo];
@@ -43,6 +52,7 @@ class ExpenseData {
 
   async search(term) {
     await this.client.connect().catch(error => logAndExit(error));
+    await this.setUpSchema().catch(error => logAndExit(error));
 
     let queryText = "SELECT * FROM expenses WHERE memo ILIKE $1;";
     let queryValues = [`%${term}%`];
@@ -58,6 +68,7 @@ class ExpenseData {
 
   async delete(id) {
     await this.client.connect().catch(error => logAndExit(error));
+    await this.setUpSchema().catch(error => logAndExit(error));
 
     let queryText = "SELECT * FROM expenses WHERE id = $1;";
     let queryValues = [id];
@@ -76,6 +87,7 @@ class ExpenseData {
 
   async clear() {
     await this.client.connect().catch(error => logAndExit(error));
+    await this.setUpSchema().catch(error => logAndExit(error));
   
     let query = "DELETE FROM expenses;"
     let data = await this.client.query(query).catch(error => logAndExit(error));
@@ -83,6 +95,14 @@ class ExpenseData {
     console.log("All expenses have been deleted.");
   
     await this.client.end().catch(error => logAndExit(error));      
+  }
+
+  async setUpSchema() {
+    let query = "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'expenses';"
+    let data = await this.client.query(query).catch(error => logAndExit(error));
+    if (data.rows[0].count === "0") {
+      await this.client.query(SCHEMA).catch(error => logAndExit(error));
+    }
   }
 
   printDivider(data) {
