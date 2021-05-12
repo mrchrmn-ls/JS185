@@ -1,4 +1,6 @@
-const PROCESS = require('process');
+const PROCESS = require("process");
+const rlsync = require("readline-sync");
+
 const { Client } = require("pg");
 
 function logAndExit(error) {
@@ -64,6 +66,17 @@ class ExpenseData {
     }
 
     await this.client.end().catch(error => logAndExit(error));
+  }
+
+  async clear() {
+    await this.client.connect().catch(error => logAndExit(error));
+  
+    let query = "DELETE FROM expenses;"
+    let data = await this.client.query(query).catch(error => logAndExit(error));
+
+    console.log("All expenses have been deleted.");
+  
+    await this.client.end().catch(error => logAndExit(error));      
   }
 
   printResults(data) {
@@ -158,6 +171,13 @@ search QUERY - list expenses with a matching memo field
       }
       else {
         console.log("You must provide an id.");
+      } 
+
+    } else if (command === "clear") {
+      if (rlsync.question("This will remove all expenses. Are you sure? (enter y to confirm) - ") === "y") {
+        this.expenses.clear();
+      } else {
+        PROCESS.exit(1);
       }
     }
   }

@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "pg": "8.6.0"
+    "pg": "8.6.0",
+    "readline-sync": "^1.4.10"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
