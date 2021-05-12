@@ -8,6 +8,7 @@ function logAndExit(error) {
   PROCESS.exit(1);
 }
 
+
 class ExpenseData {
   constructor() {
     this.client = new Client({
@@ -22,8 +23,12 @@ class ExpenseData {
     let query = "SELECT * FROM expenses;"
     let data = await this.client.query(query).catch(error => logAndExit(error));
 
-    this.printResults(data);
-  
+    if (data.rowCount === 0) {
+      console.log("There are no expenses");
+    } else {
+      this.printResults(data);
+    }
+
     await this.client.end().catch(error => logAndExit(error));
   }
 
@@ -81,16 +86,30 @@ class ExpenseData {
 
   printResults(data) {
     function printHeader() {
-      console.log(
-` id |      date added |     amount | memo
--------------------------------------------------------------`);
+      console.log(" id |      date added |     amount | memo");
+      console.log("-".repeat(37 + maxMemoLength));
     }
 
     function printRow(colArr) {
       console.log(colArr.join(" | "));
     }
-  
-//    printHeader();
+
+    let total = 0;
+    let maxMemoLength = 0;
+
+    data.rows.forEach(row => {
+      total += Number(row.amount);
+      if (row.memo.length > maxMemoLength) maxMemoLength = row.memo.length
+    });
+
+    console.log();
+
+    if (data.rowCount > 1) {
+      console.log(`There are ${data.rowCount} expenses:\n`);
+    }
+
+    printHeader();
+
     data.rows.forEach(row => {
       let columns = [
         String(row.id).padStart(3),
@@ -100,6 +119,13 @@ class ExpenseData {
       ];
       printRow(columns);
     });
+
+    if (data.rowCount > 1) {
+      console.log("-".repeat(37 + maxMemoLength));
+      console.log("Total" + String(total).padStart(29));
+    }
+ 
+    console.log();
   }
 }
 
