@@ -23,11 +23,10 @@ class ExpenseData {
     let query = "SELECT * FROM expenses;"
     let data = await this.client.query(query).catch(error => logAndExit(error));
 
-    if (data.rowCount === 0) {
-      console.log("There are no expenses");
-    } else {
-      this.printResults(data);
-    }
+    this.printCount(data);
+    this.printHeader(data);
+    this.printResults(data);
+    this.printTotal(data);
 
     await this.client.end().catch(error => logAndExit(error));
   }
@@ -49,7 +48,10 @@ class ExpenseData {
     let queryValues = [`%${term}%`];
     let data = await this.client.query(queryText, queryValues).catch(error => logAndExit(error));
 
+    this.printCount(data);
+    this.printHeader(data);
     this.printResults(data);
+    this.printTotal(data);
 
     await this.client.end().catch(error => logAndExit(error));
   }
@@ -69,7 +71,6 @@ class ExpenseData {
       console.log("The following entry has been deleted:");
       this.printResults(data);
     }
-
     await this.client.end().catch(error => logAndExit(error));
   }
 
@@ -84,32 +85,44 @@ class ExpenseData {
     await this.client.end().catch(error => logAndExit(error));      
   }
 
-  printResults(data) {
-    function printHeader() {
-      console.log(" id |      date added |     amount | memo");
-      console.log("-".repeat(37 + maxMemoLength));
-    }
-
-    function printRow(colArr) {
-      console.log(colArr.join(" | "));
-    }
-
-    let total = 0;
+  printDivider(data) {
     let maxMemoLength = 0;
-
     data.rows.forEach(row => {
-      total += Number(row.amount);
       if (row.memo.length > maxMemoLength) maxMemoLength = row.memo.length
     });
+    console.log("-".repeat(37 + maxMemoLength));
+  }
 
-    console.log();
+  getTotal(data) {
+    let total = 0;
+    data.rows.forEach(row => {
+      total += Number(row.amount);
+    });
+    return total;
+  }
 
+  printHeader(data) {
+    console.log(" id |      date added |     amount | memo");
+    this.printDivider(data);
+  }
+
+  printTotal(data) {
     if (data.rowCount > 1) {
-      console.log(`There are ${data.rowCount} expenses:\n`);
+      this.printDivider(data);
+      console.log("Total" + String(this.getTotal(data).toFixed(2)).padStart(29));  
     }
+  }
 
-    printHeader();
+  printCount(data) {
+    let count = data.rowCount;
+    if (count === 1){
+      console.log("There is 1 expense.");
+    } else if (count > 1) {
+      console.log(`There are ${count} expenses.`);
+    }
+  }
 
+  printResults(data) {
     data.rows.forEach(row => {
       let columns = [
         String(row.id).padStart(3),
@@ -117,15 +130,8 @@ class ExpenseData {
         row.amount.padStart(10),
         row.memo
       ];
-      printRow(columns);
+      console.log(columns.join(" | "));
     });
-
-    if (data.rowCount > 1) {
-      console.log("-".repeat(37 + maxMemoLength));
-      console.log("Total" + String(total).padStart(29));
-    }
- 
-    console.log();
   }
 }
 
