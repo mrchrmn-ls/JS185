@@ -5,5 +5,5 @@ package-lock.json
 /03-application/*/node_modules
 /03-application/*/package-lock.json
 /03-application/*/session-store.db
-03-application/ls-final/*
+03-application/ls-final
 /.vscode
