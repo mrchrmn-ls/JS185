@@ -5,6 +5,7 @@ const flash = require("express-flash");
 const session = require("express-session");
 const { body, validationResult } = require("express-validator");
 const store = require("connect-loki");
+const SessionPersistence = require("./lib/session-persistence");
 
 const TodoList = require("./lib/todolist");
 const Todo = require("./lib/todo");
@@ -14,7 +15,6 @@ const app = express();
 const HOST = "localhost";
 const PORT = 3000;
 const LokiStore = store(session);
-
 
 app.set("view engine", "pug");
 app.set("views", "./views");
@@ -37,24 +37,18 @@ app.use(session({
   store: new LokiStore({})
 }));
 
-// Set up flash messages
 app.use(flash());
-app.use((req, res, next) => {
-  res.locals.flash = req.session.flash;
-  delete req.session.flash;
+
+// Create a new datastore
+app.use((res, req, next) => {
+  res.locals.store = new SessionPersistence(req.session);
   next();
 });
 
-// Setting up todo list from session data
-app.use((req, _, next) => {
-  let todoLists = [];
-  if ("todoLists" in req.session) {
-    req.session.todoLists.forEach(list => {
-      todoLists.push(TodoList.makeTodoList(list));
-    });
-  }
-
-  req.session.todoLists = todoLists;
+// Set up flash messages
+app.use((req, res, next) => {
+  res.locals.flash = req.session.flash;
+  delete req.session.flash;
   next();
 });
 
