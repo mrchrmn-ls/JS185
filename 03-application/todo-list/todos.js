@@ -40,7 +40,7 @@ app.use(session({
 app.use(flash());
 
 // Create a new datastore
-app.use((res, req, next) => {
+app.use((req, res, next) => {
   res.locals.store = new SessionPersistence(req.session);
   next();
 });
