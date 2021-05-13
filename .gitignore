@@ -2,7 +2,8 @@
 package-lock.json
 /*/node_modules
 /*/package-lock.json
-/projects/*/node_modules
-/projects/*/package-lock.json
-/projects/*/session-store.db
+/03-application/*/node_modules
+/03-application/*/package-lock.json
+/03-application/*/session-store.db
+03-application/ls-final/*
 /.vscode
