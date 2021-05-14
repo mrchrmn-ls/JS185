@@ -1,33 +1,33 @@
 extends layout 
 
 block main 
-  section#todos(class=todoList.isDone() ? "done" : "")
+  section#todos(class=listDone ? "done" : "")
     header 
-      h2= todoList.getTitle()
+      h2= todoList.title
       ul 
-        if todoList.size() > 0 && !todoList.isDone()
+        if somethingLeftToDo
           li 
-            form.complete_all(action=`/lists/${todoList.getId()}/complete_all`
+            form.complete_all(action=`/lists/${todoList.id}/complete_all`
                               method="post")
               button.check(type="submit") Mark all complete
         li 
-          form(action=`/lists/${todoList.getId()}/edit`
+          form(action=`/lists/${todoList.id}/edit`
                 method="get")
             button.edit(type="submit") Edit list
     ul 
       each todo in todos 
-        li(class=todo.isDone() ? "done" : "")
-          form.check(action=`/lists/${todoList.getId()}/todos/${todo.getId()}/toggle`
+        li(class=todo.done ? "done" : "")
+          form.check(action=`/lists/${todoList.id}/todos/${todo.id}/toggle`
                      method="post")
-            input(type="hidden" name="done" value=!todo.isDone())
+            input(type="hidden" name="done" value=!todo.done)
             button Done 
           
           h3= todo.title 
-          form.delete(action=`/lists/${todoList.getId()}/todos/${todo.getId()}/destroy`
+          form.delete(action=`/lists/${todoList.id}/todos/${todo.id}/destroy`
                       method="post")
             button Delete
 
-    form(action=`/lists/${todoList.getId()}/todos` method="post")
+    form(action=`/lists/${todoList.id}/todos` method="post")
       dl 
         dt 
           label(for="todoTitle") Enter a new thing to do: 

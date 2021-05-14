@@ -12,7 +12,7 @@ function sortByTitle(array) {
               });
 }
 
-function sortTodosByStatus(todos) {
+function sortByStatus(todos) {
   return todos.slice()
   .sort((todoA, todoB) => {
     if (todoA.done && !todoB.done) return 1;
@@ -21,4 +21,4 @@ function sortTodosByStatus(todos) {
   });
 }
 
-module.exports = { sortByTitle, sortTodosByStatus };
+module.exports = { sortByTitle, sortByStatus };
