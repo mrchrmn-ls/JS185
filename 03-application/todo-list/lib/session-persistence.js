@@ -46,7 +46,9 @@ module.exports = class SessionPersistence {
 
   markListDone(listId) {
     let list = this._findList(listId);
-    list.todos.forEach(item => item.done = true);
+    list.todos.forEach(item => {
+      item.done = true;
+    });
   }
 
   addTodo(listId, title) {
@@ -56,6 +58,27 @@ module.exports = class SessionPersistence {
       title: title,
       done: false
     });
+  }
+
+  newList(title) {
+    this._todoLists.push({
+      id: nextId(),
+      title: title,
+      todos: []
+    });
+  }
+
+  deleteList(listId) {
+    let index = this._todoLists.findIndex(list => list.id === listId);
+    this._todoLists.splice(index,1);
+  }
+
+  setListTitle(listId, title) {
+    this._findList(listId).title = title;
+  }
+
+  validTitle(title) {
+    return !this._todoLists.some(list => list.title === title);
   }
 
   _findList(listId) {
