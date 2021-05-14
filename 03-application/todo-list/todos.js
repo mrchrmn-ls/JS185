@@ -9,7 +9,7 @@ const SessionPersistence = require("./lib/session-persistence");
 
 const TodoList = require("./lib/todolist");
 const Todo = require("./lib/todo");
-const { sortByTitleAndStatus } = require("./lib/sort");
+const { sortByTitle, sortTodosByStatus } = require("./lib/sort");
 
 const app = express();
 const HOST = "localhost";
@@ -58,8 +58,17 @@ app.get("/", (_req, res) => {
 });
 
 // Display all lists
-app.get("/lists", (req, res) => {
-  res.render("lists", { todoLists: sortByTitleAndStatus(req.session.todoLists) });
+app.get("/lists", (_req, res) => {
+  let store = res.locals.store;
+  let todoLists = store.getSortedLists();
+
+  let todosInfo = todoLists.map(list => ({
+    countAllTodos: list.todos.length,
+    countDoneTodos: list.todos.filter(todo => todo.done).length,
+    isDone: store.listDone(list)
+  }));
+
+  res.render("lists", { todoLists, todosInfo });
 });
 
 // Display new list form
