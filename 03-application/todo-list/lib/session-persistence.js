@@ -1,5 +1,6 @@
 const SeedData = require("./seed-data");
 const deepCopy = require("./deep-copy");
+const nextId = require("./next-id");
 const { sortByTitle } = require("./sort");
 
 module.exports = class SessionPersistence {
@@ -9,11 +10,11 @@ module.exports = class SessionPersistence {
   }
 
   listDone(list) {
-    return list.todos.length > 0 && list.todos.every(todo => todo.done);
+    return list.todos.length > 0 && list.todos.every(item => item.done);
   }
 
   somethingLeftToDo(list) {
-    return list.todos.some(todo => !todo.done);
+    return list.todos.some(item => !item.done);
   }
 
   getSortedLists() {
@@ -24,7 +25,45 @@ module.exports = class SessionPersistence {
   }
 
   getListFromId(id) {
-    let list = this._todoLists.find(list => list.id === id);
+    let list = this._findList(id);
     return deepCopy(list);
+  }
+
+  getTodoFromList(todoId, list) {
+    return list.todos.find(item => item.id === todoId);
+  }
+
+  toggleTodo(listId, todoId) {
+    let todo = this._findTodo(listId, todoId);
+    todo.done = !todo.done;
+  }
+
+  deleteTodo(listId, todoId) {
+    let list = this._findList(listId);
+    let index = list.todos.findIndex(item => item.id === todoId);
+    list.todos.splice(index, 1);
+  }
+
+  markListDone(listId) {
+    let list = this._findList(listId);
+    list.todos.forEach(item => item.done = true);
+  }
+
+  addTodo(listId, title) {
+    let list = this._findList(listId);
+    list.todos.push({
+      id: nextId(),
+      title: title,
+      done: false
+    });
+  }
+
+  _findList(listId) {
+    return this._todoLists.find(list => list.id === listId);
+  }
+
+  _findTodo(listId, todoId) {
+    let list = this._findList(listId);
+    return list.todos.find(item => item.id === todoId);
   }
 };
