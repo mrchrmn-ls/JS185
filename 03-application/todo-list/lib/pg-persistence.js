@@ -7,23 +7,53 @@ module.exports = class PgPersistence {
   }
 
   listDone(list) {
-    // return list.todos.length > 0 && list.todos.every(item => item.done);
+    return list.todos.length > 0 && list.todos.every(item => item.done);
   }
 
   somethingLeftToDo(list) {
-    // return list.todos.some(item => !item.done);
+    return list.todos.some(item => !item.done);
   }
 
-  getSortedLists() {
-    // let lists = deepCopy(this._todoLists);
-    // let notDoneLists = lists.filter(list => !this.listDone(list));
-    // let doneLists = lists.filter(list => this.listDone(list));
-    // return [].concat(sortByTitle(notDoneLists), sortByTitle(doneLists));
+  _reorderTodoLists(lists) {
+    let notDone = [];
+    let done = [];
+
+    lists.forEach(list => {
+      if (this.listDone(list)) done.push(list);
+      else notDone.push(list);
+    });
+
+    return notDone.concat(done);
   }
 
-  getListFromId(id) {
-    // let list = this._findList(id);
-    // return deepCopy(list);
+  async getSortedLists() {
+    const ALL_TODOLISTS = "SELECT * FROM todolists ORDER BY lower(title) ASC";
+    const FIND_TODOS = "SELECT * FROM todos WHERE todolist_id = $1";
+
+    let result = await dbQuery(ALL_TODOLISTS);
+    let todoLists = result.rows;
+
+    for (let index = 0; index < todoLists.length; index += 1) {
+      let todoList = todoLists[index];
+      let todos = await dbQuery(FIND_TODOS, todoList.id);
+      todoList.todos = todos.rows;
+    }
+
+    return this._reorderTodoLists(todoLists);
+  }
+
+  async getListFromId(id) {
+    const FIND_LIST = "SELECT * FROM todolists WHERE id = $1";
+    const FIND_TODOS = "SELECT * FROM todos WHERE todolist_id = $1 ORDER BY done, title";
+
+    let list = dbQuery(FIND_LIST, id);
+    let todos = dbQuery(FIND_TODOS, id);
+    let queryResults = await Promise.all([list, todos]);
+
+    let todoList = queryResults[0].rows[0];
+    todoList.todos = queryResults[1].rows;
+
+    return todoList;
   }
 
   getTodoFromList(todoId, list) {

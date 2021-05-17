@@ -62,17 +62,21 @@ app.get("/", (_req, res) => {
 
 
 // Display all lists
-app.get("/lists", (_req, res) => {
-  let store = res.locals.store;
-  let todoLists = store.getSortedLists();
+app.get("/lists", async (_req, res, next) => {
+  try {
+    let store = res.locals.store;
+    let todoLists = await store.getSortedLists();
 
-  let todosInfo = todoLists.map(list => ({
-    countAllTodos: list.todos.length,
-    countDoneTodos: list.todos.filter(todo => todo.done).length,
-    isDone: store.listDone(list)
-  }));
+    let todosInfo = todoLists.map(list => ({
+      countAllTodos: list.todos.length,
+      countDoneTodos: list.todos.filter(todo => todo.done).length,
+      isDone: store.listDone(list)
+    }));
 
-  res.render("lists", { todoLists, todosInfo });
+    res.render("lists", { todoLists, todosInfo });
+  } catch (error) {
+    next(error);
+  }
 });
 
 
@@ -83,20 +87,24 @@ app.get("/lists/new", (_req, res) => {
 
 
 //Display single list
-app.get("/lists/:todoListId", (req, res, next) => {
-  let store = res.locals.store;
-  let listId = Number(req.params.todoListId);
-  let list = store.getListFromId(listId);
+app.get("/lists/:todoListId", async (req, res, next) => {
+  try {
+    let store = res.locals.store;
+    let listId = Number(req.params.todoListId);
+    let list = await store.getListFromId(listId);
 
-  if (!list) {
-    next(new Error("Todo list not found."));
-  } else {
-    res.render("list", {
-      todoList: list,
-      listDone: store.listDone(list),
-      somethingLeftToDo: store.somethingLeftToDo(list),
-      todos: sortByStatus(sortByTitle(list.todos))
-    });
+    if (!list) {
+      next(new Error("Todo list not found."));
+    } else {
+      res.render("list", {
+        todoList: list,
+        listDone: store.listDone(list),
+        somethingLeftToDo: store.somethingLeftToDo(list),
+        todos: list.todos
+      });
+    }
+  } catch (error) {
+    next(error);
   }
 });
 
