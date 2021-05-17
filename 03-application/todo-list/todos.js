@@ -7,7 +7,7 @@ const session = require("express-session");
 const { body, validationResult } = require("express-validator");
 const store = require("connect-loki");
 const PgPersistence = require("./lib/pg-persistence");
-// const SessionPersistence = require("./lib/session-persistence");
+const catchError = require("./lib/catch-error");
 
 const { sortByTitle, sortByStatus } = require("./lib/sort");
 
@@ -62,8 +62,8 @@ app.get("/", (_req, res) => {
 
 
 // Display all lists
-app.get("/lists", async (_req, res, next) => {
-  try {
+app.get("/lists", catchError(
+  async (_req, res) => {
     let store = res.locals.store;
     let todoLists = await store.getSortedLists();
 
@@ -74,10 +74,8 @@ app.get("/lists", async (_req, res, next) => {
     }));
 
     res.render("lists", { todoLists, todosInfo });
-  } catch (error) {
-    next(error);
-  }
-});
+  })
+);
 
 
 // Display new list form
@@ -87,14 +85,14 @@ app.get("/lists/new", (_req, res) => {
 
 
 //Display single list
-app.get("/lists/:todoListId", async (req, res, next) => {
-  try {
+app.get("/lists/:todoListId", catchError(
+  async (req, res) => {
     let store = res.locals.store;
     let listId = Number(req.params.todoListId);
     let list = await store.getListFromId(listId);
 
     if (!list) {
-      next(new Error("Todo list not found."));
+      throw new Error("Todo list not found.");
     } else {
       res.render("list", {
         todoList: list,
@@ -103,10 +101,8 @@ app.get("/lists/:todoListId", async (req, res, next) => {
         todos: list.todos
       });
     }
-  } catch (error) {
-    next(error);
-  }
-});
+  })
+);
 
 
 // Display list editing view
