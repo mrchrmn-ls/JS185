@@ -47,18 +47,6 @@ app.use((req, res, next) => {
 });
 
 
-// TEMP
-app.use(async (req, res, next) => {
-  try {
-    await res.locals.store.testQuery1();
-    await res.locals.store.testQuery2();
-    res.send("That's it. Thank you and good night.");
-  } catch (error) {
-    next(error);
-  }
-});
-
-
 // Set up flash messages
 app.use((req, res, next) => {
   res.locals.flash = req.session.flash;

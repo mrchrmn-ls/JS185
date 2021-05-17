@@ -1,37 +1,6 @@
-const { Client } = require("pg");
+const { dbQuery } = require("./db-query");
 
 module.exports = class PgPersistence {
-
-  async testQuery1() {
-    const SQL = "SELECT * FROM todolists";
-
-    let client = new Client({
-      database: "js185_todo_list",
-      password: "pw"
-    });
-
-    await client.connect();
-    let result = await client.query(SQL);
-    console.log("query1:", result.rows);
-    await client.end();
-  }
-
-
-  async testQuery2() {
-    const SQL = "SELECT * FROM todos";
-
-    let client = new Client({
-      database: "js185_todo_list",
-      password: "pw"
-    });
-
-    await client.connect();
-    let result = await client.query(SQL);
-    console.log("query2:", result.rows);
-    await client.end();
-  }
-
-
   constructor(session) {
     // this._todoLists = session.todoLists || deepCopy(SeedData);
     // session.todoLists = this._todoLists;
