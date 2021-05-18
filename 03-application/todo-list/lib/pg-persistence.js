@@ -57,12 +57,12 @@ module.exports = class PgPersistence {
   }
 
   getTodoFromList(todoId, list) {
-    // return list.todos.find(item => item.id === todoId);
+    return list.todos.find(item => item.id === todoId);
   }
 
-  toggleTodo(listId, todoId) {
-    // let todo = this._findTodo(listId, todoId);
-    // todo.done = !todo.done;
+  async toggleTodo(listId, todoId) {
+    const TOGGLE = "UPDATE todos SET done = NOT done WHERE id = $1 AND todolist_id = $2";
+    await dbQuery(TOGGLE, todoId, listId);
   }
 
   deleteTodo(listId, todoId) {

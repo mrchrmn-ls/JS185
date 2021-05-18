@@ -98,7 +98,7 @@ app.get("/lists/:todoListId", catchError(
         todoList: list,
         listDone: store.listDone(list),
         somethingLeftToDo: store.somethingLeftToDo(list),
-        todos: list.todos
+        todos: sortByStatus(sortByTitle(list.todos))
       });
     }
   })
@@ -197,29 +197,31 @@ app.post("/lists/:todoListId/complete_all", (req, res, next) => {
 
 
 // Toggle status of todo item
-app.post("/lists/:todoListId/todos/:todoId/toggle", (req, res, next) => {
-  let store = res.locals.store;
-  let todoId = Number(req.params.todoId);
-  let listId = Number(req.params.todoListId);
-  let list = store.getListFromId(listId);
+app.post("/lists/:todoListId/todos/:todoId/toggle", catchError(
+  async (req, res, next) => {
+    let store = res.locals.store;
+    let todoId = Number(req.params.todoId);
+    let listId = Number(req.params.todoListId);
+    let list = await store.getListFromId(listId);
 
-  if (!list) {
-    next(new Error("Todo list not found."));
-  } else {
-    let todo = store.getTodoFromList(todoId, list);
-    if (!todo) {
-      next(new Error("Todo item not found."));
+    if (!list) {
+      throw new Error("Todo list not found.");
     } else {
-      store.toggleTodo(listId, todoId);
-      if (req.body.done) {
-        req.flash("success", `"${todo.title}" marked complete.`);
+      let todo = store.getTodoFromList(todoId, list);
+      if (!todo) {
+        throw new Error("Todo item not found.");
       } else {
-        req.flash("success", `"${todo.title}" unchecked.`);
+        await store.toggleTodo(listId, todoId);
+        if (req.body.done) {
+          req.flash("success", `"${todo.title}" marked complete.`);
+        } else {
+          req.flash("success", `"${todo.title}" unchecked.`);
+        }
+        res.redirect(`/lists/${listId}`);
       }
-      res.redirect(`/lists/${listId}`);
     }
   }
-});
+));
 
 
 // Delete todo item
