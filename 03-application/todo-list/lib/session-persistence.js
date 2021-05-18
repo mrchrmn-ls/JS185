@@ -89,4 +89,8 @@ module.exports = class SessionPersistence {
     let list = this._findList(listId);
     return list.todos.find(item => item.id === todoId);
   }
+
+  uniqueConstraintValidation(_error) {
+    return false;
+  }
 };

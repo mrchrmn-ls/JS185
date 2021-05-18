@@ -1,11 +1,6 @@
 const { dbQuery } = require("./db-query");
 
 module.exports = class PgPersistence {
-  constructor(session) {
-    // this._todoLists = session.todoLists || deepCopy(SeedData);
-    // session.todoLists = this._todoLists;
-  }
-
   listDone(list) {
     return list.todos.length > 0 && list.todos.every(item => item.done);
   }
@@ -61,59 +56,49 @@ module.exports = class PgPersistence {
   }
 
   async toggleTodo(listId, todoId) {
-    const TOGGLE = "UPDATE todos SET done = NOT done WHERE id = $1 AND todolist_id = $2";
-    await dbQuery(TOGGLE, todoId, listId);
+    const TOGGLE = "UPDATE todos SET done = NOT done WHERE todolist_id = $1 AND id = $2";
+    await dbQuery(TOGGLE, listId, todoId);
   }
 
-  deleteTodo(listId, todoId) {
-    // let list = this._findList(listId);
-    // let index = list.todos.findIndex(item => item.id === todoId);
-    // list.todos.splice(index, 1);
+  async deleteTodo(listId, todoId) {
+    const DELETE_TODO = "DELETE FROM todos WHERE todolist_id = $1 AND id = $2";
+    await dbQuery(DELETE_TODO, listId, todoId);
   }
 
-  markListDone(listId) {
-    // let list = this._findList(listId);
-    // list.todos.forEach(item => {
-    //   item.done = true;
-    // });
+  async markListDone(listId) {
+    const MARK_DONE = "UPDATE todos SET done = true WHERE todolist_id = $1 AND done = false";
+    await dbQuery(MARK_DONE, listId);
   }
 
-  addTodo(listId, title) {
-    // let list = this._findList(listId);
-    // list.todos.push({
-    //   id: nextId(),
-    //   title: title,
-    //   done: false
-    // });
+  async addTodo(listId, title) {
+    const ADD_TODO = "INSERT INTO todos (todolist_id, title) VALUES ($1, $2)";
+    await dbQuery(ADD_TODO, listId, title);
   }
 
-  newList(title) {
-    // this._todoLists.push({
-    //   id: nextId(),
-    //   title: title,
-    //   todos: []
-    // });
+  async newList(title) {
+    const NEW_LIST = "INSERT INTO todolists (title) VALUES ($1)";
+    await dbQuery(NEW_LIST, title);
   }
 
-  deleteList(listId) {
-    // let index = this._todoLists.findIndex(list => list.id === listId);
-    // this._todoLists.splice(index,1);
+  async deleteList(listId) {
+    const DELETE_LIST = "DELETE FROM todolists WHERE id = $1";
+    await dbQuery(DELETE_LIST, listId);
   }
 
-  setListTitle(listId, title) {
-    // this._findList(listId).title = title;
+  async setListTitle(listId, title) {
+    const SET_LIST_TITLE = "UPDATE todolists SET title = $2 WHERE id = $1";
+    await dbQuery(SET_LIST_TITLE, listId, title); 
   }
 
-  validTitle(title) {
-    // return !this._todoLists.some(list => list.title === title);
+  async validTitle(title) {
+    const CHECK_TITLE = "SELECT * FROM todolists WHERE title = $1";
+    let result = await dbQuery(CHECK_TITLE, title);
+    return result.rowCount === 0;
   }
 
-  _findList(listId) {
-    // return this._todoLists.find(list => list.id === listId);
-  }
-
-  _findTodo(listId, todoId) {
-  //   let list = this._findList(listId);
-  //   return list.todos.find(item => item.id === todoId);
+  uniqueConstraintViolation(error) {
+    let regexp1 = new RegExp("unique", "gi");
+    let regexp2 = new RegExp("constraint", "gi");
+    return regexp1.test(String(error)) && regexp2.test(String(error));
   }
 };
