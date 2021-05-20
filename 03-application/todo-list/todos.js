@@ -17,6 +17,17 @@ const HOST = "localhost";
 const PORT = 3000;
 const LokiStore = store(session);
 
+
+// SignIn check middleware
+const requiresAuthentication = (req, res, next) => {
+  if(!res.locals.signedIn) {
+    console.log("Not authorized.");
+    res.status(401).send("Not authorized.");
+  } else {
+    next();
+  }
+}
+
 app.set("view engine", "pug");
 app.set("views", "./views");
 
@@ -64,23 +75,6 @@ app.get("/", (_req, res) => {
 });
 
 
-// Display all lists
-app.get("/lists", catchError(
-  async (_req, res) => {
-    let store = res.locals.store;
-    let todoLists = await store.getSortedLists();
-
-    let todosInfo = todoLists.map(list => ({
-      countAllTodos: list.todos.length,
-      countDoneTodos: list.todos.filter(todo => todo.done).length,
-      isDone: store.listDone(list)
-    }));
-
-    res.render("lists", { todoLists, todosInfo });
-  })
-);
-
-
 //Display sign-in page
 app.get("/users/signin", (req, res) => {
   req.flash("info", "Please sign in.");
@@ -122,9 +116,30 @@ app.post("/users/signout", catchError(
 ))
 
 
+// Display all lists
+app.get("/lists", catchError(
+  async (_req, res) => {
+    let store = res.locals.store;
+    let todoLists = await store.getSortedLists();
+
+    let todosInfo = todoLists.map(list => ({
+      countAllTodos: list.todos.length,
+      countDoneTodos: list.todos.filter(todo => todo.done).length,
+      isDone: store.listDone(list)
+    }));
+
+    res.render("lists", { todoLists, todosInfo });
+  })
+);
+
+
 // Display new list form
-app.get("/lists/new", (_req, res) => {
-  res.render("new-list");
+app.get("/lists/new", requiresAuthentication, (req, res) => {
+  if (req.session.signedIn) {
+    res.render("new-list");
+  } else {
+    res.send("Not authorized.");
+  }
 });
 
 
@@ -150,7 +165,7 @@ app.get("/lists/:todoListId", catchError(
 
 
 // Display list editing view
-app.get("/lists/:todoListId/edit", catchError(
+app.get("/lists/:todoListId/edit", requiresAuthentication, catchError(
   async (req, res) => {
     let listId = Number(req.params.todoListId);
     let list = await res.locals.store.getListFromId(listId);
@@ -167,7 +182,7 @@ app.get("/lists/:todoListId/edit", catchError(
 
 
 // Delete todo list
-app.post("/lists/:todoListId/destroy", catchError(
+app.post("/lists/:todoListId/destroy", requiresAuthentication, catchError(
   async (req, res) => {
     let store = res.locals.store;
     let listId = Number(req.params.todoListId);
@@ -194,7 +209,7 @@ app.post("/lists/:todoListId/edit",
       .isLength({ max: 100 })
       .withMessage("Title must be shorter than 100 characters.")
   ],
-  catchError(
+  requiresAuthentication, catchError(
     async (req, res) => {
       let store = res.locals.store;
       let listId = Number(req.params.todoListId);
@@ -241,7 +256,7 @@ app.post("/lists/:todoListId/edit",
 
 
 // Mark all todo items as done
-app.post("/lists/:todoListId/complete_all", catchError(
+app.post("/lists/:todoListId/complete_all", requiresAuthentication, catchError(
   async (req, res) => {
     let store = res.locals.store;
     let listId = Number(req.params.todoListId);
@@ -258,7 +273,7 @@ app.post("/lists/:todoListId/complete_all", catchError(
 
 
 // Toggle status of todo item
-app.post("/lists/:todoListId/todos/:todoId/toggle", catchError(
+app.post("/lists/:todoListId/todos/:todoId/toggle", requiresAuthentication, catchError(
   async (req, res) => {
     let store = res.locals.store;
     let todoId = Number(req.params.todoId);
@@ -286,7 +301,7 @@ app.post("/lists/:todoListId/todos/:todoId/toggle", catchError(
 
 
 // Delete todo item
-app.post("/lists/:todoListId/todos/:todoId/destroy", catchError(
+app.post("/lists/:todoListId/todos/:todoId/destroy", requiresAuthentication, catchError(
   async (req, res) => {
     let store = res.locals.store;
     let todoId = Number(req.params.todoId);
@@ -319,7 +334,7 @@ app.post("/lists/:todoListId/todos",
       .isLength({ max: 100 })
       .withMessage("Item name must not exceed 100 characters.")
   ],
-  catchError(
+  requiresAuthentication, catchError(
     async (req, res) => {
       let store = res.locals.store;
       let listId = Number(req.params.todoListId);
@@ -358,7 +373,7 @@ app.post("/lists",
       .isLength({ max: 100 })
       .withMessage("Title must be shorter than 100 characters.")
   ],
-  catchError(
+  requiresAuthentication, catchError(
     async (req, res) => {
       let title = req.body.todoListTitle;
       let errors = validationResult(req);
