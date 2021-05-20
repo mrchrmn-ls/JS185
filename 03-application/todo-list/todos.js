@@ -86,11 +86,12 @@ app.get("/users/signin", (req, res) => {
 
 // Signing in
 app.post("/users/signin", catchError(
-  (req, res) => {
+  async (req, res) => {
     let username = req.body.username.trim();
     let password = req.body.password;
+    let authenticated = await res.locals.store.userAuthenticated(username, password)
 
-    if (username !== "admin" || password !== "secret") {
+    if (!authenticated) {
       req.flash("error", "Invalid credentials.");
       res.render("signin", {
         flash: req.flash(),
