@@ -48,8 +48,10 @@ app.use((req, res, next) => {
 });
 
 
-// Set up flash messages
+// Extract session info
 app.use((req, res, next) => {
+  res.locals.username = req.session.username;
+  res.locals.signedIn = req.session.signedIn;
   res.locals.flash = req.session.flash;
   delete req.session.flash;
   next();
@@ -77,6 +79,47 @@ app.get("/lists", catchError(
     res.render("lists", { todoLists, todosInfo });
   })
 );
+
+
+//Display sign-in page
+app.get("/users/signin", (req, res) => {
+  req.flash("info", "Please sign in.");
+  res.render("signin", {
+    flash: req.flash()
+  });
+});
+
+
+// Signing in
+app.post("/users/signin", catchError(
+  (req, res) => {
+    let username = req.body.username.trim();
+    let password = req.body.password;
+
+    if (username !== "admin" || password !== "secret") {
+      req.flash("error", "Invalid credentials.");
+      res.render("signin", {
+        flash: req.flash(),
+        username
+      });
+    } else {
+      req.session.username = username;
+      req.session.signedIn = true;
+      req.flash("info", "Welcome!");
+      res.redirect(`/lists`);
+    }
+  }
+));
+
+
+// Signing out
+app.post("/users/signout", catchError(
+  (req, res) => {
+    delete req.session.signedIn;
+    delete req.session.username;
+    res.redirect("/users/signin");
+  }
+))
 
 
 // Display new list form
