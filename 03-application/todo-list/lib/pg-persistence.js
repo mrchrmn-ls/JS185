@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 
 module.exports = class PgPersistence {
   constructor(session) {
-    this.username = session.ussername;
+    this.username = session.username;
   }
 
   async userAuthenticated(username, password) {
@@ -36,16 +36,18 @@ module.exports = class PgPersistence {
 
   async getSortedLists() {
     const ALL_TODOLISTS = "SELECT * FROM todolists WHERE username = $1 ORDER BY lower(title) ASC";
-    const FIND_TODOS = "SELECT * FROM todos WHERE todolist_id = $1";
+    const FIND_TODOS = "SELECT * FROM todos WHERE username = $1";
 
-    let result = await dbQuery(ALL_TODOLISTS, this.username);
-    let todoLists = result.rows;
+    let resultLists = dbQuery(ALL_TODOLISTS, this.username);
+    let resultTodos = dbQuery(FIND_TODOS, this.username);
+    let combinedResult = await Promise.all([resultLists, resultTodos]);
 
-    for (let index = 0; index < todoLists.length; index += 1) {
-      let todoList = todoLists[index];
-      let todos = await dbQuery(FIND_TODOS, todoList.id);
-      todoList.todos = todos.rows;
-    }
+    let todoLists = combinedResult[0].rows;
+    let todos = combinedResult[1].rows;
+
+    todoLists.forEach(list => {
+      list.todos = todos.filter(item => item.todolist_id === list.id);
+    });
 
     return this._reorderTodoLists(todoLists);
   }
