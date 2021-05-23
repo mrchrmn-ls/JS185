@@ -21,12 +21,13 @@ const LokiStore = store(session);
 // SignIn check middleware
 const requiresAuthentication = (req, res, next) => {
   if(!res.locals.signedIn) {
-    console.log("Not authorized.");
-    res.status(401).send("Not authorized.");
+    res.redirect(302, "/users/signin");
   } else {
     next();
   }
 }
+
+
 
 app.set("view engine", "pug");
 app.set("views", "./views");
@@ -118,8 +119,9 @@ app.post("/users/signout", catchError(
 
 
 // Display all lists
-app.get("/lists", catchError(
+app.get("/lists", requiresAuthentication, catchError(
   async (_req, res) => {
+
     let store = res.locals.store;
     let todoLists = await store.getSortedLists();
 
@@ -145,7 +147,7 @@ app.get("/lists/new", requiresAuthentication, (req, res) => {
 
 
 //Display single list
-app.get("/lists/:todoListId", catchError(
+app.get("/lists/:todoListId", requiresAuthentication, catchError(
   async (req, res) => {
     let store = res.locals.store;
     let listId = Number(req.params.todoListId);
